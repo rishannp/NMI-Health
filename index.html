@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NMI Health - Neurodegenerative Monitoring Index</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #08121f;
+      --bg-card:   #0e1e30;
+      --bg-light:  #122236;
+      --border:    rgba(255,255,255,0.08);
+      --white:     #ffffff;
+      --muted:     rgba(255,255,255,0.55);
+      --accent:    #3b9eff;
+      --accent-2:  #00d4b1;
+      --danger:    #ff6b6b;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NEURON CANVAS ── */
+    #neuron-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    nav, section, footer, #references-section {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      height: 68px;
+      background: rgba(8, 18, 31, 0.9);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+
+    .nav-cta {
+      background: var(--accent);
+      color: var(--white) !important;
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-weight: 600 !important;
+    }
+    .nav-cta:hover { background: #2d8eef !important; }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    section { padding: 100px 0; }
+
+    .label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    h1 { font-size: clamp(38px, 5vw, 62px); font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; }
+    h2 { font-size: clamp(26px, 3.5vw, 40px); font-weight: 700; line-height: 1.15; letter-spacing: -0.025em; }
+    h3 { font-size: 20px; font-weight: 600; line-height: 1.3; }
+
+    p.lead {
+      font-size: 18px;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.75);
+      max-width: 640px;
+    }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+    /* ── CITATION ── */
+    sup.cite a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 0 1px;
+    }
+    sup.cite a:hover { text-decoration: underline; }
+
+    /* ── HERO ── */
+    #hero {
+      padding-top: 160px;
+      padding-bottom: 120px;
+      background: transparent;
+    }
+
+    .hero-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .hero-badge {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(59,158,255,0.12);
+      border: 1px solid rgba(59,158,255,0.25);
+      padding: 5px 12px;
+      border-radius: 20px;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(1.5); }
+    }
+
+    #hero h1 { margin-bottom: 24px; max-width: 760px; }
+    #hero h1 em { font-style: normal; color: var(--accent); }
+    #hero .lead { margin-bottom: 44px; }
+
+    .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary { background: var(--accent); color: var(--white); }
+    .btn-primary:hover { background: #2d8eef; transform: translateY(-1px); }
+    .btn-outline { background: transparent; color: var(--white); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.04); }
+
+    .hero-stats {
+      display: flex;
+      gap: 48px;
+      margin-top: 80px;
+      padding-top: 48px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .hero-stat-num {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--white);
+      line-height: 1;
+    }
+    .hero-stat-num span { color: var(--accent); }
+    .hero-stat-label { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+    /* ── PROBLEM ── */
+    #problem { background: rgba(14,30,48,0.92); backdrop-filter: blur(4px); }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: start;
+      margin-top: 64px;
+    }
+
+    .problem-statement h2 { margin-bottom: 20px; }
+    .problem-statement p { color: rgba(255,255,255,0.7); margin-bottom: 16px; }
+
+    .problem-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .stat-card {
+      background: rgba(18,34,54,0.9);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .stat-card .num {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--danger);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stat-card .num.blue { color: var(--accent); }
+    .stat-card .desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    .problem-impact {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .impact-item {
+      background: rgba(18,34,54,0.9);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+    }
+    .impact-item .icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(59,158,255,0.12);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+      font-size: 18px;
+    }
+    .impact-item h3 { font-size: 16px; margin-bottom: 8px; }
+    .impact-item p { font-size: 14px; color: var(--muted); }
+
+    /* ── ALS OVERVIEW ── */
+    #als-overview { background: rgba(8,18,31,0.95); }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      margin-top: 56px;
+    }
+
+    .overview-block h3 { font-size: 17px; margin-bottom: 20px; color: var(--accent); letter-spacing: 0.02em; }
+
+    .stage-list { list-style: none; }
+    .stage-list li {
+      display: flex;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .stage-list li:last-child { border-bottom: none; }
+    .stage-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      background: rgba(59,158,255,0.1);
+      border-radius: 4px;
+      padding: 2px 8px;
+      flex-shrink: 0;
+      height: fit-content;
+      margin-top: 1px;
+    }
+    .stage-text { color: rgba(255,255,255,0.7); }
+    .stage-text strong { color: var(--white); display: block; margin-bottom: 4px; }
+
+    .monitoring-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    .monitoring-table th {
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .monitoring-table td { padding: 10px 12px; color: rgba(255,255,255,0.7); vertical-align: top; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .monitoring-table tr:last-child td { border-bottom: none; }
+    .tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin: 2px 2px 2px 0;
+    }
+    .tag-green { background: rgba(0,212,177,0.15); color: var(--accent-2); }
+    .tag-red   { background: rgba(255,107,107,0.15); color: var(--danger); }
+
+    .alsfrs-box {
+      background: rgba(59,158,255,0.05);
+      border: 1px solid rgba(59,158,255,0.2);
+      border-radius: 12px;
+      padding: 28px;
+      margin-top: 32px;
+    }
+    .alsfrs-box h3 { font-size: 15px; color: var(--accent); margin-bottom: 12px; }
+    .alsfrs-box p { font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 8px; }
+
+    .stat-callout {
+      background: rgba(255,107,107,0.07);
+      border-left: 3px solid var(--danger);
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 14px;
+      color: rgba(255,255,255,0.8);
+    }
+    .stat-callout strong { color: var(--white); }
+
+    /* ── SOLUTION ── */
+    #solution { background: rgba(8,18,31,0.95); }
+
+    .solution-intro { max-width: 700px; margin-bottom: 64px; }
+    .solution-intro h2 { margin-bottom: 16px; }
+
+    .solution-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 64px; }
+
+    .solution-card {
+      background: rgba(14,30,48,0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      transition: border-color 0.2s;
+    }
+    .solution-card:hover { border-color: rgba(59,158,255,0.3); }
+
+    .solution-card .pill {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .pill-blue   { background: rgba(59,158,255,0.15); color: var(--accent); }
+    .pill-teal   { background: rgba(0,212,177,0.15); color: var(--accent-2); }
+    .pill-purple { background: rgba(180,100,255,0.15); color: #b464ff; }
+
+    .solution-card h3 { margin-bottom: 12px; font-size: 18px; }
+    .solution-card p { font-size: 14px; color: rgba(255,255,255,0.65); line-height: 1.65; }
+    .solution-card ul { margin-top: 16px; padding-left: 0; list-style: none; }
+    .solution-card ul li {
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      padding: 5px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .solution-card ul li::before { content: '\2192'; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+
+    .nmi-score-block {
+      background: rgba(14,30,48,0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+    .nmi-score-block h3 { font-size: 22px; margin-bottom: 12px; }
+    .nmi-score-block p { color: rgba(255,255,255,0.65); font-size: 15px; margin-bottom: 24px; }
+
+    .score-display {
+      background: rgba(18,34,54,0.95);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+    }
+    .score-label { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .score-value { font-size: 72px; font-weight: 800; letter-spacing: -0.04em; color: var(--accent); line-height: 1; }
+    .score-unit { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+    .subdomain-list { margin-top: 24px; }
+    .subdomain-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .subdomain-item:last-child { border-bottom: none; }
+    .subdomain-name { color: rgba(255,255,255,0.75); }
+    .subdomain-bar-wrap { flex: 1; margin: 0 16px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+    .subdomain-bar { height: 100%; border-radius: 2px; background: var(--accent); }
+    .subdomain-score { font-weight: 600; font-size: 13px; color: var(--accent); }
+
+    /* ── SCIENCE ── */
+    #science { background: rgba(14,30,48,0.92); backdrop-filter: blur(4px); }
+
+    .science-intro { max-width: 680px; margin-bottom: 64px; }
+    .science-intro h2 { margin-bottom: 16px; }
+    .science-intro p { color: rgba(255,255,255,0.7); }
+
+    .findings-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 48px; }
+
+    .finding-card {
+      background: rgba(8,18,31,0.9);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+    }
+    .finding-card .finding-num {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .finding-card .finding-num span { font-size: 24px; }
+    .finding-card h3 { font-size: 17px; margin-bottom: 10px; }
+    .finding-card p { font-size: 14px; color: rgba(255,255,255,0.6); }
+
+    .paper-callout {
+      background: rgba(59,158,255,0.06);
+      border: 1px solid rgba(59,158,255,0.2);
+      border-radius: 12px;
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .paper-callout .paper-icon {
+      width: 48px; height: 48px; flex-shrink: 0;
+      background: rgba(59,158,255,0.15);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .paper-callout p { font-size: 15px; color: rgba(255,255,255,0.8); margin: 0; }
+    .paper-callout strong { color: var(--white); }
+
+    /* ── WHY EEG ── */
+    #why { background: rgba(8,18,31,0.95); }
+
+    .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 56px; }
+
+    .why-item { padding: 28px 0; border-top: 2px solid var(--border); }
+    .why-item:nth-child(1) { border-color: var(--accent); }
+    .why-item:nth-child(2) { border-color: var(--accent-2); }
+    .why-item:nth-child(3) { border-color: #b464ff; }
+    .why-item:nth-child(4) { border-color: var(--accent); }
+    .why-item:nth-child(5) { border-color: var(--accent-2); }
+    .why-item:nth-child(6) { border-color: #b464ff; }
+    .why-item h3 { font-size: 16px; margin-bottom: 10px; }
+    .why-item p { font-size: 14px; color: var(--muted); }
+
+    /* ── MARKET ── */
+    #market { background: rgba(14,30,48,0.92); backdrop-filter: blur(4px); }
+
+    .market-intro { max-width: 640px; margin-bottom: 64px; }
+    .market-intro h2 { margin-bottom: 16px; }
+    .market-intro p { color: rgba(255,255,255,0.7); }
+
+    .market-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+    .market-card {
+      background: rgba(8,18,31,0.9);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 32px;
+    }
+    .market-card .market-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .market-card .market-name { font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+    .market-card .market-value { font-size: 42px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; margin-bottom: 16px; }
+    .market-card:nth-child(1) .market-value { color: rgba(255,255,255,0.3); }
+    .market-card:nth-child(2) .market-value { color: rgba(59,158,255,0.6); }
+    .market-card:nth-child(3) .market-value { color: var(--accent); }
+    .market-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── APPLICATIONS ── */
+    #applications { background: rgba(8,18,31,0.95); }
+
+    .applications-intro { max-width: 660px; margin-bottom: 64px; }
+    .applications-intro h2 { margin-bottom: 16px; }
+    .applications-intro p { color: rgba(255,255,255,0.7); }
+
+    .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+    .app-card {
+      background: rgba(14,30,48,0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .app-card:hover { transform: translateY(-2px); border-color: rgba(59,158,255,0.25); }
+    .app-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; }
+    .app-card:nth-child(1)::after { background: var(--accent); }
+    .app-card:nth-child(2)::after { background: var(--accent-2); }
+    .app-card:nth-child(3)::after { background: #b464ff; }
+
+    .app-card .app-num { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 20px; }
+    .app-card h3 { font-size: 19px; margin-bottom: 14px; }
+    .app-card p { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.65; }
+    .app-card ul { margin-top: 16px; padding-left: 0; list-style: none; }
+    .app-card ul li { font-size: 13px; color: var(--muted); padding: 4px 0; display: flex; gap: 8px; }
+    .app-card ul li::before { content: '·'; color: var(--accent); }
+
+    /* ── THESIS / ROADMAP ── */
+    #thesis { background: rgba(8,18,31,0.95); }
+
+    .thesis-intro { max-width: 720px; margin-bottom: 56px; }
+    .thesis-intro h2 { margin-bottom: 16px; }
+    .thesis-intro p { color: rgba(255,255,255,0.7); margin-bottom: 12px; }
+
+    .thesis-statement {
+      background: rgba(59,158,255,0.06);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 10px 10px 0;
+      padding: 20px 24px;
+      margin-bottom: 56px;
+      font-size: 16px;
+      color: rgba(255,255,255,0.85);
+      font-style: italic;
+      max-width: 760px;
+    }
+    .thesis-statement strong { color: var(--white); font-style: normal; }
+
+    .condition-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .condition-card {
+      background: rgba(14,30,48,0.95);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+    .condition-card:hover { border-color: rgba(59,158,255,0.25); }
+
+    .condition-card.priority-now  { border-top: 2px solid var(--accent); }
+    .condition-card.priority-next { border-top: 2px solid var(--accent-2); }
+    .condition-card.priority-future { border-top: 2px solid rgba(255,255,255,0.18); }
+
+    .condition-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .badge-now    { background: rgba(59,158,255,0.15); color: var(--accent); }
+    .badge-next   { background: rgba(0,212,177,0.15); color: var(--accent-2); }
+    .badge-future { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.45); }
+
+    .badge-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+    }
+    .badge-now .badge-dot    { background: var(--accent); }
+    .badge-next .badge-dot   { background: var(--accent-2); }
+    .badge-future .badge-dot { background: rgba(255,255,255,0.3); }
+
+    .condition-card h3 { font-size: 18px; margin-bottom: 8px; }
+    .condition-card .condition-sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+    .condition-card p { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.6; }
+
+    .evidence-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .evidence-label { font-size: 11px; color: var(--muted); flex-shrink: 0; width: 76px; }
+    .evidence-track {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .evidence-fill { height: 100%; border-radius: 2px; }
+    .fill-blue   { background: var(--accent); }
+    .fill-teal   { background: var(--accent-2); }
+    .fill-dim    { background: rgba(255,255,255,0.2); }
+
+    .thesis-note {
+      font-size: 13px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      max-width: 760px;
+    }
+
+    /* ── TEAM ── */
+    #team { background: rgba(14,30,48,0.92); backdrop-filter: blur(4px); }
+
+    .team-intro { max-width: 560px; margin-bottom: 56px; }
+    .team-intro h2 { margin-bottom: 16px; }
+    .team-intro p { color: rgba(255,255,255,0.7); }
+
+    .team-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 760px; }
+
+    .team-card {
+      background: rgba(8,18,31,0.9);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+    }
+    .team-avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .team-card h3 { font-size: 17px; margin-bottom: 4px; }
+    .team-card .role { font-size: 13px; color: var(--accent); font-weight: 500; margin-bottom: 12px; }
+    .team-card .affil { font-size: 13px; color: var(--muted); }
+
+    .collab-block {
+      margin-top: 48px;
+      background: rgba(0,212,177,0.05);
+      border: 1px solid rgba(0,212,177,0.2);
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 760px;
+    }
+    .collab-block h3 { font-size: 16px; margin-bottom: 8px; color: var(--accent-2); }
+    .collab-block p { font-size: 14px; color: rgba(255,255,255,0.65); }
+
+    /* ── REFERENCES ── */
+    #references-section {
+      background: rgba(8,18,31,0.98);
+      padding: 80px 0;
+      border-top: 1px solid var(--border);
+    }
+    #references-section h2 { font-size: 22px; margin-bottom: 32px; }
+    .ref-list { list-style: none; }
+    .ref-list li {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      gap: 16px;
+    }
+    .ref-list li:last-child { border-bottom: none; }
+    .ref-num {
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+      width: 28px;
+      font-size: 12px;
+      margin-top: 1px;
+    }
+    .ref-list a { color: rgba(59,158,255,0.8); text-decoration: none; }
+    .ref-list a:hover { text-decoration: underline; }
+
+    /* ── CONTACT ── */
+    #contact {
+      background: rgba(8,18,31,0.95);
+      text-align: center;
+      padding: 120px 0;
+    }
+    #contact .label { display: block; margin-bottom: 20px; }
+    #contact h2 { margin-bottom: 20px; }
+    #contact p.lead { margin: 0 auto 44px; }
+    #contact .contact-actions { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: rgba(14,30,48,0.98);
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+    }
+    .footer-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-logo { font-size: 16px; font-weight: 700; }
+    .footer-logo span { color: var(--accent); }
+    .footer-copy { font-size: 13px; color: var(--muted); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; }
+    .footer-links a:hover { color: var(--white); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      nav { padding: 0 24px; }
+      .nav-links { display: none; }
+      .container { padding: 0 20px; }
+      section { padding: 72px 0; }
+      .problem-grid { grid-template-columns: 1fr; gap: 40px; }
+      .problem-impact { grid-template-columns: 1fr; }
+      .solution-grid { grid-template-columns: 1fr; }
+      .nmi-score-block { grid-template-columns: 1fr; gap: 32px; }
+      .findings-grid { grid-template-columns: 1fr; }
+      .why-grid { grid-template-columns: 1fr 1fr; }
+      .market-grid { grid-template-columns: 1fr; }
+      .app-grid { grid-template-columns: 1fr; }
+      .team-grid { grid-template-columns: 1fr; }
+      .overview-grid { grid-template-columns: 1fr; }
+      .hero-stats { gap: 32px; }
+    }
+
+    @media (max-width: 560px) {
+      .problem-cards { grid-template-columns: 1fr; }
+      .why-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 34px; }
+      h2 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NEURON CANVAS -->
+<canvas id="neuron-canvas"></canvas>
+
+<!-- ── NAV ──────────────────────────────────────────────── -->
+<nav>
+  <a href="#" class="nav-logo">NMI <span>Health</span></a>
+  <ul class="nav-links">
+    <li><a href="#problem">The Problem</a></li>
+    <li><a href="#als-overview">ALS</a></li>
+    <li><a href="#solution">Platform</a></li>
+    <li><a href="#science">Science</a></li>
+    <li><a href="#market">Market</a></li>
+    <li><a href="#thesis">Roadmap</a></li>
+    <li><a href="#contact" class="nav-cta">Get in Touch</a></li>
+  </ul>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-eyebrow">
+      <span class="hero-badge">Research Stage · UCL</span>
+      <span class="hero-badge-dot"></span>
+    </div>
+    <h1>You can't treat<br>what you can't <em>track</em>.</h1>
+    <p class="lead">
+      NMI Health is developing a longitudinal, multimodal EEG platform to make
+      neurodegeneration measurable - in the clinic, at home, and at scale.
+      First indication: ALS.
+    </p>
+    <div class="hero-actions">
+      <a href="#solution" class="btn btn-primary">Explore the Platform</a>
+      <a href="#science" class="btn btn-outline">Read the Science</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="hero-stat-num">90<span>min</span></div>
+        <div class="hero-stat-label">Someone is diagnosed with ALS and someone dies, every 90 minutes <sup class="cite"><a href="#ref-5">[5]</a></sup></div>
+      </div>
+      <div>
+        <div class="hero-stat-num">40<span>%</span></div>
+        <div class="hero-stat-label">of patients with ALS are misdiagnosed at first presentation <sup class="cite"><a href="#ref-1">[1]</a></sup></div>
+      </div>
+      <div>
+        <div class="hero-stat-num">3-5<span>yr</span></div>
+        <div class="hero-stat-label">average survival from diagnosis with no disease-modifying cure <sup class="cite"><a href="#ref-5">[5]</a></sup></div>
+      </div>
+      <div>
+        <div class="hero-stat-num">92.9<span>%</span></div>
+        <div class="hero-stat-label">failure rate in Phase III ALS clinical trials</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── PROBLEM ───────────────────────────────────────────── -->
+<section id="problem">
+  <div class="container">
+    <div class="problem-grid">
+      <div class="problem-statement">
+        <span class="label">The Problem</span>
+        <h2>You Can't Treat What You Can't Track</h2>
+        <p>
+          ALS is one of the most heterogeneous diseases in neurology. No two patients
+          progress identically - yet the tools used to monitor them have changed little
+          in decades. Clinicians rely on coarse, infrequent assessments that miss the
+          week-to-week changes that define a patient's trajectory.
+        </p>
+        <p>
+          "The diagnostic delay is substantial in all groups of ALS." <sup class="cite"><a href="#ref-2">[2]</a></sup>
+          Standard clinical tools like ALSFRS-R are sparsely sampled, subjective, and
+          insensitive to short-term change. <sup class="cite"><a href="#ref-6">[6]</a></sup>
+          The result: delayed diagnosis, poor trial stratification, and missed therapeutic windows.
+        </p>
+        <p>
+          By the time ALS is typically diagnosed, it has already caused significant
+          and irreversible damage. Diagnosis occurs at Stage 2A - when the patient is already
+          35% through their disease course. <sup class="cite"><a href="#ref-4">[4]</a></sup>
+          A monitoring gap this large has real consequences for patients, carers, and researchers
+          trying to help them.
+        </p>
+      </div>
+      <div>
+        <div class="problem-cards">
+          <div class="stat-card">
+            <div class="num">30-40%</div>
+            <div class="desc">misdiagnosis rate at first ALS presentation <sup class="cite"><a href="#ref-1">[1]</a></sup></div>
+          </div>
+          <div class="stat-card">
+            <div class="num blue">~1 yr</div>
+            <div class="desc">average diagnostic delay from symptom onset <sup class="cite"><a href="#ref-2">[2]</a></sup></div>
+          </div>
+          <div class="stat-card">
+            <div class="num">3-4 mo</div>
+            <div class="desc">between specialist clinic visits, while disease changes weekly <sup class="cite"><a href="#ref-7">[7]</a></sup></div>
+          </div>
+          <div class="stat-card">
+            <div class="num blue">8-14%</div>
+            <div class="desc">of misdiagnosed patients undergo inappropriate surgical procedures <sup class="cite"><a href="#ref-1">[1]</a></sup></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="problem-impact">
+      <div class="impact-item">
+        <div class="icon">&#128269;</div>
+        <h3>Differential Diagnosis</h3>
+        <p>ALS shares features with PBP, PMA, and PLS. Without continuous biomarker data, distinguishing subtypes and confirming diagnosis is slow and invasive, involving needle EMG, nerve conduction studies, MRI, and muscle biopsy. <sup class="cite"><a href="#ref-3">[3]</a></sup></p>
+      </div>
+      <div class="impact-item">
+        <div class="icon">&#128138;</div>
+        <h3>Drug Development</h3>
+        <p>92.9% of Phase III ALS trials fail. Poor patient stratification and insensitive endpoints make it near-impossible to detect drug signal. EEG-derived biomarkers provide a continuous, objective measure where ALSFRS-R cannot. <sup class="cite"><a href="#ref-8">[8]</a></sup></p>
+      </div>
+      <div class="impact-item">
+        <div class="icon">&#127973;</div>
+        <h3>Ongoing Care</h3>
+        <p>Patients attending specialist ALS clinics have a 43.7% reduced risk of death and 7.5 months additional survival versus general neurology. <sup class="cite"><a href="#ref-9">[9]</a></sup> Most patients see a specialist every 3-4 months - far too infrequently for a disease that changes week to week. <sup class="cite"><a href="#ref-7">[7]</a></sup></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── ALS OVERVIEW ──────────────────────────────────────── -->
+<section id="als-overview">
+  <div class="container">
+    <span class="label">Disease Context</span>
+    <h2>Understanding ALS Progression</h2>
+    <p style="color:rgba(255,255,255,0.65);max-width:640px;margin-top:12px;">
+      Amyotrophic Lateral Sclerosis is a fatal neurodegenerative disease affecting upper and lower
+      motor neurons. It is one of four major motor neuron diseases, with annual incidence of
+      5.5 per 100,000. <sup class="cite"><a href="#ref-5">[5]</a></sup>
+      Average age at diagnosis is 55, and it is 20% more common in men. <sup class="cite"><a href="#ref-5">[5]</a></sup>
+    </p>
+
+    <div class="overview-grid">
+      <div class="overview-block">
+        <h3>Clinical Staging (King's College System) <sup class="cite"><a href="#ref-4">[4]</a></sup></h3>
+        <ul class="stage-list">
+          <li>
+            <span class="stage-num">1</span>
+            <span class="stage-text"><strong>Symptom Onset</strong>First region involvement. 80% of cases begin with weakness or spasticity, with muscle fasciculations.</span>
+          </li>
+          <li>
+            <span class="stage-num">2A</span>
+            <span class="stage-text"><strong>Diagnosis</strong>35% through disease course. Average diagnostic delay from symptom onset exceeds one year. <sup class="cite"><a href="#ref-2">[2]</a></sup></span>
+          </li>
+          <li>
+            <span class="stage-num">2B</span>
+            <span class="stage-text"><strong>Second Region Involved</strong>38% through disease. Mobility, balance, and coordination begin to deteriorate.</span>
+          </li>
+          <li>
+            <span class="stage-num">3</span>
+            <span class="stage-text"><strong>Third Region Involved</strong>61% through disease. 30% have swallowing difficulty; 40% reduced respiratory capacity; 50%+ require mobility aids.</span>
+          </li>
+          <li>
+            <span class="stage-num">4A</span>
+            <span class="stage-text"><strong>Gastrostomy Required</strong>77% through disease course. Nutritional support via feeding tube becomes necessary.</span>
+          </li>
+          <li>
+            <span class="stage-num">4B</span>
+            <span class="stage-text"><strong>Non-Invasive Ventilation</strong>80% through disease course. Respiratory failure managed with NIV; tracheostomy in late stages.</span>
+          </li>
+        </ul>
+
+        <div class="stat-callout">
+          <strong>Over 55% of ALS patients experience mild to severe depression</strong> as measured by the Beck Depression Inventory, significantly correlated with ALSFRS-R score. <sup class="cite"><a href="#ref-8">[8]</a></sup>
+          A decline of just 2 ALSFRS-R points in swallowing can be the difference between self-sufficiency and full caregiver dependence.
+        </div>
+      </div>
+
+      <div class="overview-block">
+        <h3>Current Monitoring Tools <sup class="cite"><a href="#ref-8">[8]</a></sup></h3>
+        <table class="monitoring-table">
+          <thead>
+            <tr>
+              <th>Tool</th>
+              <th>Strengths</th>
+              <th>Limitations</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>ALSFRS-R</strong></td>
+              <td>
+                <span class="tag tag-green">Validated</span>
+                <span class="tag tag-green">Remote</span>
+                <span class="tag tag-green">Correlates with QoL</span>
+              </td>
+              <td>
+                <span class="tag tag-red">Subjective</span>
+                <span class="tag tag-red">No pathophysiology</span>
+                <span class="tag tag-red">Coarse scale</span>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Vital Capacity</strong></td>
+              <td>
+                <span class="tag tag-green">Clinically relevant</span>
+                <span class="tag tag-green">Survival-related</span>
+              </td>
+              <td>
+                <span class="tag tag-red">Onset-dependent</span>
+                <span class="tag tag-red">Late indicator</span>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Hand-held Dynamometry</strong></td>
+              <td>
+                <span class="tag tag-green">Objective</span>
+                <span class="tag tag-green">Portable</span>
+              </td>
+              <td>
+                <span class="tag tag-red">Examiner error</span>
+                <span class="tag tag-red">Training required</span>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Tracheostomy-Free Survival</strong></td>
+              <td>
+                <span class="tag tag-green">Clinically relevant</span>
+              </td>
+              <td>
+                <span class="tag tag-red">Increases trial cost</span>
+                <span class="tag tag-red">No QoL data</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="alsfrs-box">
+          <h3>ALSFRS-R: The Current Gold Standard</h3>
+          <p>
+            The ALS Functional Rating Scale - Revised has been used since 1991 (last revised 2009).
+            It measures 12 aspects of physical function across 4 domains: bulbar, fine motor,
+            gross motor, and respiratory. Each scored 0-4; maximum total 48. <sup class="cite"><a href="#ref-8">[8]</a></sup>
+          </p>
+          <p>
+            In ALS clinical trials, patients decline approximately 1 point per month on average. <sup class="cite"><a href="#ref-10">[10]</a></sup>
+            Yet ALSFRS-R is subjective, does not measure underlying pathophysiology, and
+            is sampled only every 3-4 months in clinical practice - far too infrequently
+            for the week-to-week changes patients experience. <sup class="cite"><a href="#ref-7">[7]</a></sup>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── SOLUTION ──────────────────────────────────────────── -->
+<section id="solution">
+  <div class="container">
+    <div class="solution-intro">
+      <span class="label">Our Platform</span>
+      <h2>Making Neurodegeneration Measurable</h2>
+      <p class="lead">
+        The Neurodegenerative Monitoring Index (NMI) is a longitudinal, dry-EEG and
+        multimodal platform that extracts clinically actionable biomarkers from
+        within-patient brain-network change - at home, continuously.
+      </p>
+    </div>
+
+    <div class="solution-grid">
+      <div class="solution-card">
+        <span class="pill pill-blue">Clinical Insight</span>
+        <h3>Continuous Disease State</h3>
+        <p>Resting-state EEG features track ALSFRS-R functional decline with significant fidelity, explaining variance in disease status beyond what time alone accounts for. <sup class="cite"><a href="#ref-11">[11]</a></sup></p>
+        <ul>
+          <li>Alpha-power attenuation as disease marker <sup class="cite"><a href="#ref-12">[12]</a></sup></li>
+          <li>Theta-band network decoupling</li>
+          <li>Aperiodic (1/f) exponent shifts</li>
+          <li>Graph-theoretic connectivity indices</li>
+        </ul>
+      </div>
+      <div class="solution-card">
+        <span class="pill pill-teal">In-Home Monitoring</span>
+        <h3>Real-World Feasibility</h3>
+        <p>Data collected entirely in patients' homes over 1.5 years. EEG-clinical associations preserved across sparse electrode configurations, enabling practical deployment. <sup class="cite"><a href="#ref-11">[11]</a></sup></p>
+        <ul>
+          <li>Dry-electrode EEG reaching clinical parity <sup class="cite"><a href="#ref-14">[14]</a></sup></li>
+          <li>19 electrodes sufficient for home use</li>
+          <li>Automated preprocessing pipeline</li>
+          <li>Quality-controlled session aggregation</li>
+        </ul>
+      </div>
+      <div class="solution-card">
+        <span class="pill pill-purple">Drug Development</span>
+        <h3>Sensitive Endpoint</h3>
+        <p>Neurophysiological biomarkers provide higher-resolution signal of disease state than coarse clinical scales, enabling better trial stratification and endpoint sensitivity.</p>
+        <ul>
+          <li>Continuous, objective outcome measure</li>
+          <li>Within-patient tracking over months</li>
+          <li>Patient stratification by neural phenotype <sup class="cite"><a href="#ref-13">[13]</a></sup></li>
+          <li>Complementary to ALSFRS-R <sup class="cite"><a href="#ref-6">[6]</a></sup></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nmi-score-block">
+      <div>
+        <h3>The NMI Score</h3>
+        <p>
+          A single calibrated score - plus subdomain scores covering bulbar, respiratory,
+          gross motor, and fine motor function - with confidence bounds and quality flags.
+          Exposed via a clinician dashboard and API.
+        </p>
+        <p>
+          Built on resting-state EEG fused with remote ALSFRS-R digital proxies
+          (accelerometer, speech, IMU). Digital ALSFRS-R proxies show longitudinal association
+          with progression and are increasingly feasible to collect remotely. <sup class="cite"><a href="#ref-15">[15]</a></sup>
+          The framework generalises beyond ALS to other neurodegenerative disorders.
+        </p>
+      </div>
+      <div>
+        <div class="score-display">
+          <div class="score-label">NMI Score</div>
+          <div class="score-value">74</div>
+          <div class="score-unit">out of 100 · Session 14 of 22</div>
+        </div>
+        <div class="subdomain-list">
+          <div class="subdomain-item">
+            <span class="subdomain-name">Bulbar</span>
+            <div class="subdomain-bar-wrap"><div class="subdomain-bar" style="width:62%"></div></div>
+            <span class="subdomain-score">62</span>
+          </div>
+          <div class="subdomain-item">
+            <span class="subdomain-name">Respiratory</span>
+            <div class="subdomain-bar-wrap"><div class="subdomain-bar" style="width:81%"></div></div>
+            <span class="subdomain-score">81</span>
+          </div>
+          <div class="subdomain-item">
+            <span class="subdomain-name">Gross Motor</span>
+            <div class="subdomain-bar-wrap"><div class="subdomain-bar" style="width:70%"></div></div>
+            <span class="subdomain-score">70</span>
+          </div>
+          <div class="subdomain-item">
+            <span class="subdomain-name">Fine Motor</span>
+            <div class="subdomain-bar-wrap"><div class="subdomain-bar" style="width:88%"></div></div>
+            <span class="subdomain-score">88</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── SCIENCE ───────────────────────────────────────────── -->
+<section id="science">
+  <div class="container">
+    <div class="science-intro">
+      <span class="label">Peer-Reviewed Evidence</span>
+      <h2>The Only High-Frequency Longitudinal EEG Study in ALS</h2>
+      <p>
+        Our preliminary research - a 1.5-year, in-home longitudinal case study across two
+        bulbar-onset ALS patients - is the first to validate resting-state EEG as a
+        real-time gauge of neural integrity at the individual patient level with dense,
+        repeated sampling. "Not one study has high frequency recording longitudinally in
+        any ALS patients to directly validate the use in a real-time scenario." <sup class="cite"><a href="#ref-11">[11]</a></sup>
+      </p>
+    </div>
+
+    <div class="findings-grid">
+      <div class="finding-card">
+        <div class="finding-num">0.22<span>+ deltaR2</span></div>
+        <h3>EEG explains disease variance beyond time</h3>
+        <p>
+          EEG features accounted for up to 22.5% of additional variance in ALSFRS-R
+          functional status beyond what simple temporal progression explains, with
+          bootstrap confidence intervals excluding zero across all electrode montages. <sup class="cite"><a href="#ref-11">[11]</a></sup>
+        </p>
+      </div>
+      <div class="finding-card">
+        <div class="finding-num">R=0.81<span></span></div>
+        <h3>Single-electrode biomarkers track clinical decline</h3>
+        <p>
+          MSC theta global efficiency tracked ALSFRS-R with Spearman R = 0.81 after
+          detrending (p = 3.9 x 10^-5). Alpha-power attenuation, aperiodic exponent shifts, and
+          low-gamma power all showed robust longitudinal coupling. <sup class="cite"><a href="#ref-11">[11]</a></sup>
+          Alpha reduction is the most consistent ALS biomarker in the literature. <sup class="cite"><a href="#ref-12">[12]</a></sup>
+        </p>
+      </div>
+      <div class="finding-card">
+        <div class="finding-num">19<span> electrodes</span></div>
+        <h3>Sparse electrodes are sufficient for home use</h3>
+        <p>
+          EEG-clinical associations were preserved across dense (124-channel) and sparse (19-electrode)
+          montages. Consumer-grade dry-electrode headsets are viable for
+          longitudinal neurodegeneration monitoring - consistent with findings in
+          mild cognitive impairment. <sup class="cite"><a href="#ref-11">[11]</a></sup>
+          Dry-electrode EEG is now reaching clinical-trial parity for biomarker tasks. <sup class="cite"><a href="#ref-14">[14]</a></sup>
+        </p>
+      </div>
+      <div class="finding-card">
+        <div class="finding-num">18-25<span> sessions</span></div>
+        <h3>Dense within-patient sampling is key</h3>
+        <p>
+          18-25 sessions per participant over months, compared to the field standard of
+          4-5 sessions with 5.4-month gaps. <sup class="cite"><a href="#ref-13">[13]</a></sup>
+          High-frequency sampling unlocks the within-patient dynamics invisible to
+          cross-sectional designs and sparse longitudinal cohorts.
+        </p>
+      </div>
+    </div>
+
+    <div class="paper-callout">
+      <div class="paper-icon">&#128196;</div>
+      <p>
+        <strong>Patel, Settgast et al. (Under Review)</strong> - "Neural Correlates of
+        Amyotrophic Lateral Sclerosis Progression during Longitudinal Resting-State EEG:
+        A Case Study." <em>Journal of Neural Engineering, IOP Publishing.</em>
+        In collaboration with UCL, Julius-Maximilians-Universitat Wurzburg, Queen Square
+        Institute of Neurology, and Aspire CREATe.
+        <sup class="cite"><a href="#ref-11">[11]</a></sup>
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── WHY EEG ────────────────────────────────────────────── -->
+<section id="why">
+  <div class="container">
+    <span class="label">Why EEG - Why Now</span>
+    <h2 style="max-width:600px;margin-bottom:8px;">EEG is uniquely positioned for this problem</h2>
+    <p style="color:var(--muted);max-width:560px;">
+      EEG has real limitations. But for longitudinal neurodegeneration monitoring,
+      it offers a combination of properties that no other modality can match.
+    </p>
+
+    <div class="why-grid">
+      <div class="why-item">
+        <h3>Motor and speech independent</h3>
+        <p>Unlike EMG or speech analysis, resting-state EEG captures neural network changes even when motor or bulbar function is severely compromised - making it usable throughout all stages of ALS. <sup class="cite"><a href="#ref-12">[12]</a></sup></p>
+      </div>
+      <div class="why-item">
+        <h3>Feasible at home</h3>
+        <p>Dry-electrode EEG is reaching clinical parity for biomarker tasks with dramatically reduced setup burden. <sup class="cite"><a href="#ref-14">[14]</a></sup> Our data was collected entirely in patients' homes over 18 months. <sup class="cite"><a href="#ref-11">[11]</a></sup></p>
+      </div>
+      <div class="why-item">
+        <h3>Captures what MRI cannot</h3>
+        <p>Resting-state EEG networks known to be altered in ALS change on timescales <sup class="cite"><a href="#ref-12">[12]</a></sup> that only EEG can practically sample densely. MRI is too expensive, immobile, and infrequent.</p>
+      </div>
+      <div class="why-item">
+        <h3>Signal processing is the moat</h3>
+        <p>Hardware commoditises. The value is in validated pipelines, patient-specific models, and the longitudinal data that trains them. EEG graph and connectivity metrics in ALS correlate with disease progression. <sup class="cite"><a href="#ref-16">[16]</a></sup></p>
+      </div>
+      <div class="why-item">
+        <h3>UK SaMD regulation is tractable</h3>
+        <p>MHRA guidance on Software as a Medical Device is clearer than ever. A regulated route for an EEG-AI monitoring product is achievable with the right clinical evidence package. <sup class="cite"><a href="#ref-17">[17]</a></sup></p>
+      </div>
+      <div class="why-item">
+        <h3>A platform, not a point solution</h3>
+        <p>The same framework - longitudinal neural biomarkers - extends beyond ALS to Parkinson's, MCI, and other neurodegenerative conditions. The first indication de-risks the platform and builds the proprietary dataset.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── MARKET ────────────────────────────────────────────── -->
+<section id="market">
+  <div class="container">
+    <div class="market-intro">
+      <span class="label">Market Opportunity</span>
+      <h2>A Growing, Underserved Market</h2>
+      <p>
+        The ALS monitoring and therapeutics landscape is expanding rapidly, driven by new
+        drug approvals, remote care mandates, and digital health investment. NMI is positioned
+        at the intersection of all three. Figures based on UK and US markets.
+      </p>
+    </div>
+
+    <div class="market-grid">
+      <div class="market-card">
+        <div class="market-label">TAM - Total Addressable Market</div>
+        <div class="market-name">Total ALS Market</div>
+        <div class="market-value">$3.2B</div>
+        <p>Diagnostics, therapeutics, monitoring, and care across ALS and adjacent neurodegenerative conditions.</p>
+      </div>
+      <div class="market-card">
+        <div class="market-label">SAM - Serviceable Available Market</div>
+        <div class="market-name">ALS Digital Health</div>
+        <div class="market-value">$900M</div>
+        <p>ALS drug development endpoints, at-home monitoring, and clinical decision support tools.</p>
+      </div>
+      <div class="market-card">
+        <div class="market-label">SOM - Serviceable Obtainable Market</div>
+        <div class="market-name">5-Year Target</div>
+        <div class="market-value">$4.5M</div>
+        <p>Wearable EEG technology for patient stratification, staging, and prognostication in ALS clinical trials and monitoring programmes. We expect to capture 5% of SAM in the first 5 years.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── APPLICATIONS ──────────────────────────────────────── -->
+<section id="applications">
+  <div class="container">
+    <div class="applications-intro">
+      <span class="label">Applications</span>
+      <h2>Three Paths to Clinical Impact</h2>
+      <p>
+        The NMI platform generates biomarker data with value across the care continuum -
+        from individual patient monitoring to population-level drug development.
+      </p>
+    </div>
+
+    <div class="app-grid">
+      <div class="app-card">
+        <div class="app-num">01</div>
+        <h3>Clinical Biomarker</h3>
+        <p>
+          Neurophysiological staging as an objective complement to ALSFRS-R <sup class="cite"><a href="#ref-8">[8]</a></sup> in specialist
+          clinics. A continuous neural integrity score gives clinicians a richer picture
+          of disease state between visits.
+        </p>
+        <ul>
+          <li>Digital ALSFRS-R proxy via EEG and IMU</li>
+          <li>Patient-specific neural trajectory tracking</li>
+          <li>Early detection of subclinical decline</li>
+          <li>Clinician dashboard and EHR integration</li>
+        </ul>
+      </div>
+      <div class="app-card">
+        <div class="app-num">02</div>
+        <h3>In-Home Monitoring</h3>
+        <p>
+          A dry-electrode, adaptive EEG system for longitudinal in-home monitoring. <sup class="cite"><a href="#ref-14">[14]</a></sup>
+          Patients record weekly sessions; automated pipelines deliver quality-controlled
+          data to care teams without clinic visits.
+        </p>
+        <ul>
+          <li>Dry-electrode headset, minimal setup</li>
+          <li>Compatible with 19-electrode sparse configurations</li>
+          <li>Fuses EEG, IMU, speech proxies <sup class="cite"><a href="#ref-15">[15]</a></sup></li>
+          <li>Remote QC and session reporting</li>
+        </ul>
+      </div>
+      <div class="app-card">
+        <div class="app-num">03</div>
+        <h3>Trial Endpoint and Stratification</h3>
+        <p>
+          The 92.9% Phase III failure rate in ALS is partly an endpoint problem.
+          NMI provides a sensitive, continuous, objective biomarker to improve
+          trial design, patient selection, and progression detection. <sup class="cite"><a href="#ref-13">[13]</a></sup>
+        </p>
+        <ul>
+          <li>Neural biomarker as primary or secondary endpoint</li>
+          <li>Pre-trial patient stratification by phenotype</li>
+          <li>Pharmacodynamic response monitoring</li>
+          <li>Lower trial cost through faster signal detection</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── THESIS / ROADMAP ──────────────────────────────────── -->
+<section id="thesis">
+  <div class="container">
+    <div class="thesis-intro">
+      <span class="label">Platform Thesis</span>
+      <h2>Large-Scale Brain Change is Trackable</h2>
+      <p>
+        Our core thesis is simple: any disease that produces significant, sustained changes
+        in large-scale brain network organisation should leave a measurable signature in
+        longitudinal EEG. We have begun validating this in ALS. The same framework extends
+        to a much broader set of conditions.
+      </p>
+      <p>
+        We are not proposing EEG solves everything. We are proposing that a validated,
+        within-patient, longitudinal EEG signal - combined with multimodal data - provides
+        a practical and scalable window into neural health that current clinical tools cannot.
+      </p>
+    </div>
+
+    <div class="thesis-statement">
+      <strong>The thesis:</strong> If a disease meaningfully disrupts cortical network topology,
+      spectral dynamics, or large-scale connectivity over months - resting-state EEG,
+      sampled densely and analysed within-patient, can serve as a continuous, objective
+      gauge of that disruption. We start where the evidence is strongest, and build outward.
+    </div>
+
+    <div class="condition-grid">
+
+      <div class="condition-card priority-now">
+        <div class="condition-badge badge-now"><span class="badge-dot"></span>Current Focus</div>
+        <h3>ALS</h3>
+        <div class="condition-sub">Amyotrophic Lateral Sclerosis</div>
+        <p>
+          We have direct preliminary evidence. In-home longitudinal rsEEG tracks ALSFRS-R
+          functional status within individual patients across 18-25 sessions over 1.5 years.
+          Alpha attenuation, theta decoupling, and aperiodic exponent shifts correlate
+          robustly with clinical decline. <sup class="cite"><a href="#ref-11">[11]</a></sup>
+        </p>
+        <div class="evidence-bar-wrap">
+          <span class="evidence-label">Evidence</span>
+          <div class="evidence-track"><div class="evidence-fill fill-blue" style="width:85%"></div></div>
+        </div>
+      </div>
+
+      <div class="condition-card priority-next">
+        <div class="condition-badge badge-next"><span class="badge-dot"></span>Near-Term</div>
+        <h3>Alzheimer's Disease</h3>
+        <div class="condition-sub">Including MCI and prodromal stages</div>
+        <p>
+          A substantial body of EEG biomarker literature already exists. Slowing of
+          dominant frequency, reduced alpha/beta power, and altered connectivity are
+          well-documented. Longitudinal within-patient validation using our framework
+          is the natural next step.
+        </p>
+        <div class="evidence-bar-wrap">
+          <span class="evidence-label">Evidence</span>
+          <div class="evidence-track"><div class="evidence-fill fill-teal" style="width:70%"></div></div>
+        </div>
+      </div>
+
+      <div class="condition-card priority-next">
+        <div class="condition-badge badge-next"><span class="badge-dot"></span>Near-Term</div>
+        <h3>Stroke</h3>
+        <div class="condition-sub">Post-stroke neural recovery</div>
+        <p>
+          Stroke produces acute and evolving large-scale network disruption that is
+          well-suited to longitudinal EEG monitoring. Recovery trajectories vary
+          significantly between patients, making within-patient tracking particularly
+          valuable for rehabilitation planning and clinical trials.
+        </p>
+        <div class="evidence-bar-wrap">
+          <span class="evidence-label">Evidence</span>
+          <div class="evidence-track"><div class="evidence-fill fill-teal" style="width:55%"></div></div>
+        </div>
+      </div>
+
+      <div class="condition-card priority-next">
+        <div class="condition-badge badge-next"><span class="badge-dot"></span>Near-Term</div>
+        <h3>Parkinson's Disease</h3>
+        <div class="condition-sub">Including prodromal monitoring</div>
+        <p>
+          EEG beta-band hypersynchrony in sensorimotor networks and slowing of peak
+          frequency are established Parkinson's signatures. Longitudinal monitoring of
+          neural network state complements existing wearable motor assessments and
+          opens a non-invasive window into dopaminergic system decline.
+        </p>
+        <div class="evidence-bar-wrap">
+          <span class="evidence-label">Evidence</span>
+          <div class="evidence-track"><div class="evidence-fill fill-teal" style="width:60%"></div></div></div>
+      </div>
+
+      <div class="condition-card priority-next">
+        <div class="condition-badge badge-next"><span class="badge-dot"></span>Near-Term</div>
+        <h3>Frontotemporal Dementia</h3>
+        <div class="condition-sub">FTD and ALS-FTD continuum</div>
+        <p>
+          FTD shares overlap with ALS in up to 15% of cases (ALS-FTD). EEG changes
+          in frontotemporal networks are documented. Given our ALS work, the
+          ALS-FTD continuum is a natural adjacency - same platform, same electrode
+          configurations, closely related pathophysiology.
+        </p>
+        <div class="evidence-bar-wrap">
+          <span class="evidence-label">Evidence</span>
+          <div class="evidence-track"><div class="evidence-fill fill-teal" style="width:45%"></div></div>
+        </div>
+      </div>
+
+      <div class="condition-card priority-future">
+        <div class="condition-badge badge-future"><span class="badge-dot"></span>Longer Horizon</div>
+        <h3>MS and Huntington's</h3>
+        <div class="condition-sub">Multiple Sclerosis / Huntington's Disease</div>
+        <p>
+          Both produce meaningful EEG-detectable changes, but the evidence base for
+          longitudinal within-patient EEG tracking is thinner and the clinical pathways
+          less clearly defined for this approach. Achievable in principle - lower priority
+          until the platform is validated in faster-moving conditions.
+        </p>
+        <div class="evidence-bar-wrap">
+          <span class="evidence-label">Evidence</span>
+          <div class="evidence-track"><div class="evidence-fill fill-dim" style="width:30%"></div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="thesis-note">
+      Evidence bars reflect the existing peer-reviewed literature supporting longitudinal
+      EEG biomarker tracking for each condition - not NMI-specific data, except for ALS.
+      Prioritisation is based on strength of EEG evidence, unmet clinical need, and
+      feasibility of within-patient longitudinal study design.
+    </p>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── TEAM ───────────────────────────────────────────────── -->
+<section id="team">
+  <div class="container">
+    <div class="team-intro">
+      <span class="label">Team and Collaborators</span>
+      <h2>Built at the Intersection of Engineering and Neurology</h2>
+      <p>
+        NMI Health emerged from research conducted across UCL's Department of Electronic
+        and Electrical Engineering, Queen Square Institute of Neurology, and Aspire CREATe -
+        with international collaborators at Julius-Maximilians-Universitat Wurzburg.
+      </p>
+    </div>
+
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar">RP</div>
+        <h3>Rishan Patel</h3>
+        <div class="role">Founder</div>
+        <div class="affil">PhD Candidate, Department of Electronic and Electrical Engineering, UCL</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar" style="background:linear-gradient(135deg,#00d4b1,#028090)">TS</div>
+        <h3>Tomko Settgast</h3>
+        <div class="role">Research Collaborator</div>
+        <div class="affil">Institute of Psychology, Julius-Maximilians-Universitat Wurzburg</div>
+      </div>
+    </div>
+
+    <div class="collab-block">
+      <h3>Active Collaboration - ARM Lab, Queen Square Institute of Neurology, UCL</h3>
+      <p>
+        We are currently collaborating with the ARM Lab at the Queen Square Institute of
+        Neurology, UCL, to extend this research into larger cohorts. This partnership
+        is central to our next phase of clinical validation and funding strategy.
+        We are seeking support to formally test the NMI platform within this collaboration.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── CONTACT ───────────────────────────────────────────── -->
+<section id="contact">
+  <div class="container">
+    <span class="label">Get Involved</span>
+    <h2>Interested in what we're building?</h2>
+    <p class="lead">
+      We are at an early, pivotal stage. If you are a clinician, researcher, funder, or
+      industry partner aligned with our mission to make neurodegeneration measurable,
+      we would like to hear from you.
+    </p>
+    <div class="contact-actions">
+      <a href="mailto:uceerjp@ucl.ac.uk" class="btn btn-primary">Contact the Team</a>
+      <a href="#science" class="btn btn-outline">Read the Research</a>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── REFERENCES ─────────────────────────────────────────── -->
+<section id="references-section">
+  <div class="container">
+    <h2>References</h2>
+    <ol class="ref-list">
+      <li id="ref-1"><span class="ref-num">[1]</span><span>ALS Association. "Understanding ALS: Symptoms and Diagnosis." <a href="https://www.als.org/understanding-als/symptoms-diagnosis" target="_blank" rel="noopener">als.org</a>. 10-15% false-positive rate; 40% misdiagnosis rate cited.</span></li>
+      <li id="ref-2"><span class="ref-num">[2]</span><span>Longinetti E, Fang F. "Epidemiology of amyotrophic lateral sclerosis: an update of recent literature." <em>Amyotrophic Lateral Sclerosis and Frontotemporal Degeneration.</em> 2022. Taylor and Francis. <a href="https://www.tandfonline.com/doi/full/10.1080/21678421.2022.2053722" target="_blank" rel="noopener">DOI link</a>. "The diagnostic delay is substantial in all groups of ALS."</span></li>
+      <li id="ref-3"><span class="ref-num">[3]</span><span>Mayo Clinic. "Amyotrophic lateral sclerosis (ALS) - Diagnosis and treatment." <a href="https://www.mayoclinic.org/diseases-conditions/amyotrophic-lateral-sclerosis/diagnosis-treatment/drc-20354027" target="_blank" rel="noopener">mayoclinic.org</a>. Diagnostic procedures and treatment modalities.</span></li>
+      <li id="ref-4"><span class="ref-num">[4]</span><span>TargetALS. "The Stages of ALS: Framing the Progression of a Nonlinear Disease." 2022. <a href="https://www.targetals.org/2022/01/04/the-stages-of-als-framing-the-progression-of-a-nonlinear-disease/" target="_blank" rel="noopener">targetals.org</a>. King's Clinical Staging System and MiToS system.</span></li>
+      <li id="ref-5"><span class="ref-num">[5]</span><span>Auragens. "7 Stages of ALS: Understanding the Progression." <a href="https://auragens.com/7-stages-of-als-understanding-the-progression/" target="_blank" rel="noopener">auragens.com</a>. Epidemiology, survival, incidence data.</span></li>
+      <li id="ref-6"><span class="ref-num">[6]</span><span>van Eijk RP et al. "An old friend who has overstayed their welcome: the ALSFRS-R total score as primary endpoint for ALS clinical trials." <em>Amyotroph Lateral Scler Frontotemporal Degener.</em> 2021;22:300-307.</span></li>
+      <li id="ref-7"><span class="ref-num">[7]</span><span>Johns Hopkins Medicine. "ALS Specialty Care - How often will I need to be seen?" <a href="https://www.hopkinsmedicine.org/neurology-neurosurgery/specialty-areas/als-specialty-care" target="_blank" rel="noopener">hopkinsmedicine.org</a>. Clinic visit frequency 3-4 months. Also: Brooks BR et al. PMC4404434. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4404434/" target="_blank" rel="noopener">PubMed</a>.</span></li>
+      <li id="ref-8"><span class="ref-num">[8]</span><span>ALS Pathways. "Monitoring ALS - ALSFRS-R and other tools." <a href="https://www.alspathways.com/hcp/monitoring-als/" target="_blank" rel="noopener">alspathways.com</a>. Comprehensive review of current monitoring endpoints including ALSFRS-R, vital capacity, dynamometry, and tracheostomy-free survival.</span></li>
+      <li id="ref-9"><span class="ref-num">[9]</span><span>Traynor BJ, Alexander M, Corr B, et al. "Effect of a multidisciplinary amyotrophic lateral sclerosis (ALS) clinic on ALS survival: a population based study, 1996-2000." <em>J Neurol Neurosurg Psychiatry.</em> 2003;74(9):1258-1261. 43.7% reduced risk of death; 7.5 months increased survival.</span></li>
+      <li id="ref-10"><span class="ref-num">[10]</span><span>Castrillo-Viguera C, Grasso DL, Simpson E, et al. "Clinical significance in the change of decline in ALSFRS-R." <em>Amyotroph Lateral Scler.</em> 2010;11(1-2):178-180. ~1 point decline per month average in clinical trials.</span></li>
+      <li id="ref-11"><span class="ref-num">[11]</span><span>Patel R, Settgast T, Bryson B, Carlson T, Demosthenous A, Kubler A, Jiang D. "Neural Correlates of Amyotrophic Lateral Sclerosis Progression during Longitudinal Resting-State EEG: A Case Study." <em>Journal of Neural Engineering, IOP Publishing.</em> Under Review, 2025. UCL / Julius-Maximilians-Universitat Wurzburg / Queen Square Institute of Neurology / Aspire CREATe.</span></li>
+      <li id="ref-12"><span class="ref-num">[12]</span><span>Chmiel J, Stepien-Slodkowska M. "Resting-state EEG oscillations in amyotrophic lateral sclerosis (ALS): Toward mechanistic insights and clinical markers." <em>J Clin Med.</em> 2025;14(2). Systematic review: alpha reduction most consistent biomarker.</span></li>
+      <li id="ref-13"><span class="ref-num">[13]</span><span>Metzger M, Dukic S, McMackin R, et al. "Distinct longitudinal changes in EEG measures reflecting functional network disruption in ALS cognitive phenotypes." <em>Brain Topography.</em> Oct 2024. 124-patient cohort; up to 5 sessions; 5.4-month spacing.</span></li>
+      <li id="ref-14"><span class="ref-num">[14]</span><span>Researchers at Nature Scientific Reports. "Dry-electrode EEG reaching clinical-trial parity for specific biomarker tasks." <em>Sci Rep.</em> 2025. <a href="https://www.nature.com/articles/s41598-025-18184-7" target="_blank" rel="noopener">nature.com/articles/s41598-025-18184-7</a></span></li>
+      <li id="ref-15"><span class="ref-num">[15]</span><span>Hobson EV et al. "Digital remote monitoring of ALS: accelerometer- and speech-based digital measures show longitudinal association with progression." <em>Amyotroph Lateral Scler Frontotemporal Degener.</em> 2024. <a href="https://www.tandfonline.com/doi/full/10.1080/21678421.2024.2320880" target="_blank" rel="noopener">DOI link</a>. Also: Lotti S et al. <em>eBioMedicine.</em> 2024. <a href="https://www.thelancet.com/journals/ebiom/article/PIIS2352-3964(24)00139-7/fulltext" target="_blank" rel="noopener">Lancet eBioMedicine</a>.</span></li>
+      <li id="ref-16"><span class="ref-num">[16]</span><span>Fraschini M et al. "EEG functional network topology is associated with disability in patients with amyotrophic lateral sclerosis." <em>Sci Rep.</em> 2016. <a href="https://www.nature.com/articles/srep38653" target="_blank" rel="noopener">nature.com/articles/srep38653</a>. Resting-state EEG reveals disease-linked network topology changes.</span></li>
+      <li id="ref-17"><span class="ref-num">[17]</span><span>MHRA / GOV.UK. "Software and artificial intelligence (AI) as a medical device." <a href="https://www.gov.uk/government/publications/software-and-artificial-intelligence-ai-as-a-medical-device/software-and-artificial-intelligence-ai-as-a-medical-device" target="_blank" rel="noopener">gov.uk</a>. UK SaMD regulatory framework.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ── FOOTER ────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">NMI <span>Health</span></div>
+    <div class="footer-copy">2026 NMI Health. Research stage. Not yet a regulated medical device.</div>
+    <div class="footer-links">
+      <a href="#problem">Problem</a>
+      <a href="#solution">Platform</a>
+      <a href="#science">Science</a>
+      <a href="#references-section">References</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ── NEURON CANVAS SCRIPT ───────────────────────────────── -->
+<script>
+(function() {
+  const canvas = document.getElementById('neuron-canvas');
+  const ctx = canvas.getContext('2d');
+
+  let W, H, nodes, mouse = { x: -9999, y: -9999 };
+  const NODE_COUNT = 80;
+  const MAX_DIST = 160;
+  const PULSE_SPEED = 0.012;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function randBetween(a, b) { return a + Math.random() * (b - a); }
+
+  function initNodes() {
+    nodes = [];
+    for (let i = 0; i < NODE_COUNT; i++) {
+      nodes.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: randBetween(-0.18, 0.18),
+        vy: randBetween(-0.18, 0.18),
+        r: randBetween(1.8, 4.2),
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: randBetween(0.008, 0.02),
+        // occasional "active" node that fires a signal
+        active: Math.random() < 0.15,
+        fireTimer: Math.random() * 200,
+        fireInterval: randBetween(120, 300),
+      });
+    }
+  }
+
+  function drawNode(n, t) {
+    // outer glow
+    const glowR = n.r + 3 + Math.sin(n.pulse) * 2;
+    const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, glowR * 3);
+    if (n.active) {
+      grad.addColorStop(0, 'rgba(0,212,177,0.35)');
+      grad.addColorStop(1, 'rgba(0,212,177,0)');
+    } else {
+      grad.addColorStop(0, 'rgba(59,158,255,0.25)');
+      grad.addColorStop(1, 'rgba(59,158,255,0)');
+    }
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, glowR * 3, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // core dot
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+    ctx.fillStyle = n.active ? 'rgba(0,212,177,0.7)' : 'rgba(59,158,255,0.6)';
+    ctx.fill();
+  }
+
+  // travelling signal along an edge
+  const signals = [];
+
+  function spawnSignal(from, to) {
+    signals.push({ from, to, t: 0, speed: randBetween(0.006, 0.014) });
+  }
+
+  function drawSignal(sig) {
+    const nx = sig.from.x + (sig.to.x - sig.from.x) * sig.t;
+    const ny = sig.from.y + (sig.to.y - sig.from.y) * sig.t;
+    const grad = ctx.createRadialGradient(nx, ny, 0, nx, ny, 6);
+    grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+    grad.addColorStop(0.4, 'rgba(59,158,255,0.6)');
+    grad.addColorStop(1, 'rgba(59,158,255,0)');
+    ctx.beginPath();
+    ctx.arc(nx, ny, 6, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+  function drawEdge(a, b, dist) {
+    const alpha = (1 - dist / MAX_DIST) * 0.18;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = `rgba(59,158,255,${alpha})`;
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  }
+
+  let frame = 0;
+
+  function tick() {
+    ctx.clearRect(0, 0, W, H);
+    frame++;
+
+    // update and draw edges
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < MAX_DIST) drawEdge(nodes[i], nodes[j], d);
+      }
+    }
+
+    // draw nodes + move
+    for (const n of nodes) {
+      n.pulse += n.pulseSpeed;
+
+      // mouse attraction
+      const mdx = mouse.x - n.x;
+      const mdy = mouse.y - n.y;
+      const md = Math.sqrt(mdx * mdx + mdy * mdy);
+      if (md < 220) {
+        n.vx += (mdx / md) * 0.012;
+        n.vy += (mdy / md) * 0.012;
+      }
+
+      // speed cap
+      const spd = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+      if (spd > 0.6) { n.vx *= 0.6 / spd; n.vy *= 0.6 / spd; }
+
+      n.x += n.vx;
+      n.y += n.vy;
+
+      // wrap
+      if (n.x < -20)  n.x = W + 20;
+      if (n.x > W+20) n.x = -20;
+      if (n.y < -20)  n.y = H + 20;
+      if (n.y > H+20) n.y = -20;
+
+      // fire signals
+      if (n.active) {
+        n.fireTimer++;
+        if (n.fireTimer > n.fireInterval) {
+          n.fireTimer = 0;
+          n.fireInterval = randBetween(120, 300);
+          // pick nearest neighbour
+          let best = null, bestD = 9999;
+          for (const m of nodes) {
+            if (m === n) continue;
+            const dx = n.x - m.x, dy = n.y - m.y;
+            const d = Math.sqrt(dx*dx + dy*dy);
+            if (d < MAX_DIST && d < bestD) { bestD = d; best = m; }
+          }
+          if (best) spawnSignal(n, best);
+        }
+      }
+
+      drawNode(n, frame);
+    }
+
+    // draw + update signals
+    for (let i = signals.length - 1; i >= 0; i--) {
+      const s = signals[i];
+      s.t += s.speed;
+      if (s.t >= 1) { signals.splice(i, 1); continue; }
+      drawSignal(s);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  window.addEventListener('resize', () => { resize(); });
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  window.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; });
+
+  resize();
+  initNodes();
+  tick();
+})();
+</script>
+
+</body>
+</html>

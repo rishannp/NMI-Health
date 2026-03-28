@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/uceerjp/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/bc4751bb-51db-45e5-bf51-94ce5f768d5e/79573fdf-9b71-45f8-91ec-a15f153780e0/skills/pptx/**)",
+      "Bash(python -m markitdown \"C:\\\\Users\\\\uceerjp\\\\Desktop\\\\NMI Pitch Deck.pptx\")",
+      "Bash(python3 -m markitdown \"C:\\\\Users\\\\uceerjp\\\\Desktop\\\\NMI Pitch Deck.pptx\")",
+      "Bash(where py:*)",
+      "Bash(py --version)",
+      "Read(//c/Users/uceerjp/miniconda3/**)",
+      "Read(//c/ProgramData/miniconda3/**)",
+      "Read(//c/Users/uceerjp/anaconda3/**)",
+      "Bash(/c/Users/uceerjp/anaconda3/python.exe -m markitdown \"C:/Users/uceerjp/Desktop/NMI Pitch Deck.pptx\")",
+      "Bash(/c/Users/uceerjp/anaconda3/python.exe -c \":*)"
+    ]
+  }
+}
